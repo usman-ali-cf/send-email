@@ -1,29 +1,28 @@
 const axios = require('axios');
 
 exports.handler = async function (event, context) {
-  // Only allow POST requests
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: {
-        'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*', // Restrict to your app's domain in production
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      },
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    };
-  }
+  // Define CORS headers to allow all origins
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*', // Allows all origins (http and https)
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
 
   // Handle CORS preflight request
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      },
+      headers: corsHeaders,
       body: '',
+    };
+  }
+
+  // Only allow POST requests
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
 
@@ -35,10 +34,7 @@ exports.handler = async function (event, context) {
     if (!email || !verificationLink || !tokenExpirationHours) {
       return {
         statusCode: 400,
-        headers: {
-          'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Missing required fields' }),
       };
     }
@@ -82,20 +78,14 @@ exports.handler = async function (event, context) {
 
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+      headers: corsHeaders,
       body: JSON.stringify({ message: 'Email sent successfully' }),
     };
   } catch (error) {
     console.error('SendGrid API error:', error.response ? error.response.data : error.message);
     return {
       statusCode: error.response ? error.response.status : 500,
-      headers: {
-        'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Failed to send verification email' }),
     };
   }
